@@ -2,6 +2,18 @@
 
 An MCP server for interacting with MongoDB databases and MongoDB Atlas, providing tools for querying, schema inspection, and data management.
 
+## Configuration
+
+Configure **one** of the following authentication methods:
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `connection_string` | No* | MongoDB connection string (e.g., `mongodb+srv://...`) |
+| `api_client_id` | No* | Atlas API service account client ID |
+| `api_client_secret` | No* | Atlas API service account secret |
+
+*One of connection_string OR api_client_id+api_client_secret is required.
+
 ## Tools
 
 ### `aggregate`
@@ -273,18 +285,6 @@ tool call library/mongodb -m list-databases
 # Run a find query
 tool call library/mongodb -m find -p database=test -p collection=users
 ```
-
-### Configuration
-
-Configure **one** of the following authentication methods:
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `connection_string` | No* | MongoDB connection string (e.g., `mongodb+srv://...`) |
-| `api_client_id` | No* | Atlas API service account client ID |
-| `api_client_secret` | No* | Atlas API service account secret |
-
-*One of connection_string OR api_client_id+api_client_secret is required.
 
 ### Prerequisites
 
