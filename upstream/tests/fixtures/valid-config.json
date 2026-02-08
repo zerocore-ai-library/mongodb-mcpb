@@ -1,4 +1,0 @@
-{
-  "connectionString": "mongodb://valid-json-localhost:1000",
-  "loggers": "stderr"
-}
