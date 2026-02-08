@@ -1,0 +1,181 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20.x"
+  TOOL_CLI_VERSION: "latest"
+
+jobs:
+  dist:
+    name: Build Dist
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Enable Corepack (pnpm)
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.23.0 --activate
+
+      - name: Init upstream submodule
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive upstream
+
+      - name: Build upstream dist
+        env:
+          MCPB_SKIP_RUNTIME_DEPS: "1"
+        run: node scripts/build-bundle.mjs
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          if-no-files-found: error
+          path: server/**/dist/**
+
+  build:
+    name: Build (${{ matrix.target }})
+    needs: dist
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-x86_64
+            runs_on: macos-15-intel
+          - target: darwin-arm64
+            runs_on: macos-15
+          - target: linux-x86_64
+            runs_on: ubuntu-24.04
+          - target: linux-arm64
+            runs_on: ubuntu-24.04-arm
+          - target: win32-x86_64
+            runs_on: windows-2022
+          - target: win32-arm64
+            runs_on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: server
+
+      - name: Install runtime deps
+        run: npm ci --omit=dev --omit=optional --no-audit --no-fund
+
+      - name: Install tool-cli (prebuilt)
+        id: install_tool
+        continue-on-error: true
+        shell: bash
+        run: |
+          curl -fsSL "https://raw.githubusercontent.com/zerocore-ai/tool-cli/main/install.sh" | sh -s -- \
+            --version="${TOOL_CLI_VERSION}" \
+            --prefix="$HOME/.local" \
+            --force \
+            --no-modify-path
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          tool --version
+
+      - name: Setup Rust (tool-cli fallback)
+        if: steps.install_tool.outcome != 'success'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install tool-cli from source (fallback)
+        if: steps.install_tool.outcome != 'success'
+        shell: bash
+        run: |
+          cargo install --git "https://github.com/zerocore-ai/tool-cli" --locked --force
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          tool --version
+
+      - name: Pack bundle
+        shell: bash
+        run: |
+          rm -f ./*.mcpb ./*.mcpbx
+          tool pack
+          BUNDLE="$(
+            shopt -s nullglob
+            bundles=(./*.mcpb ./*.mcpbx)
+            if [ "${#bundles[@]}" -ne 1 ]; then
+              echo "Expected 1 bundle, found ${#bundles[@]}" >&2
+              exit 1
+            fi
+            printf '%s\n' "${bundles[0]}"
+          )"
+          FILENAME="$(basename "$BUNDLE")"
+          EXT="${FILENAME##*.}"
+          BASE="${FILENAME%.*}"
+          mkdir -p dist
+          OUT="dist/${BASE}-${{ matrix.target }}.${EXT}"
+          mv "$FILENAME" "$OUT"
+          node -e "
+            const fs = require('fs');
+            const crypto = require('crypto');
+            const path = require('path');
+            const p = process.argv[1];
+            const d = fs.readFileSync(p);
+            const h = crypto.createHash('sha256').update(d).digest('hex');
+            fs.writeFileSync(p + '.sha256', h + '  ' + path.basename(p) + '\n');
+          " "$OUT"
+          echo "Created: $OUT"
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.target }}
+          path: |
+            dist/*.mcpb
+            dist/*.mcpbx
+            dist/*.sha256
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download all bundles
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: bundle-*
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            artifacts/*.mcpb
+            artifacts/*.mcpbx
+            artifacts/*.sha256
