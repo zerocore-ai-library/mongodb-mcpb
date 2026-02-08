@@ -1,0 +1,1 @@
+{"version":3,"file":"operationWithFallback.js","sourceRoot":"","sources":["../../../src/helpers/operationWithFallback.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,KAAK,UAAU,qBAAqB,CACvC,gBAAoD,EACpD,QAAuB;IAEvB,IAAI,CAAC;QACD,OAAO,MAAM,gBAAgB,EAAE,CAAC;IACpC,CAAC;IAAC,MAAM,CAAC;QACL,OAAO,QAAQ,CAAC;IACpB,CAAC;AACL,CAAC"}

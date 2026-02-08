@@ -1,0 +1,1 @@
+{"version":3,"file":"managedTimeout.d.ts","sourceRoot":"","sources":["../../../src/common/managedTimeout.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,cAAc;IAC3B,MAAM,EAAE,MAAM,IAAI,CAAC;IACnB,OAAO,EAAE,MAAM,IAAI,CAAC;CACvB;AAED,wBAAgB,iBAAiB,CAAC,QAAQ,EAAE,MAAM,OAAO,CAAC,IAAI,CAAC,GAAG,IAAI,EAAE,SAAS,EAAE,MAAM,GAAG,cAAc,CAqBzG"}

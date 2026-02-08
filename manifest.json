@@ -1,0 +1,816 @@
+{
+  "manifest_version": "0.3",
+  "name": "mongodb",
+  "version": "0.1.1",
+  "description": "A Model Context Protocol server for interacting with MongoDB Databases and MongoDB Atlas.",
+  "icon": "icon.png",
+  "author": {
+    "name": "Stephen Akinyemi"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://www.mongodb.com",
+  "documentation": "https://github.com/mongodb-js/mongodb-mcp-server",
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=20.19.0"
+    }
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js",
+        "--transport",
+        "stdio",
+        "--loggers",
+        "stderr,mcp"
+      ],
+      "env": {
+        "MDB_MCP_CONNECTION_STRING": "${user_config.connection_string}",
+        "MDB_MCP_API_CLIENT_ID": "${user_config.api_client_id}",
+        "MDB_MCP_API_CLIENT_SECRET": "${user_config.api_client_secret}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "aggregate", "description": "Run an aggregation against a MongoDB collection" },
+    { "name": "collection-indexes", "description": "Describe the indexes for a collection" },
+    { "name": "collection-schema", "description": "Describe the schema for a collection" },
+    { "name": "collection-storage-size", "description": "Gets the size of the collection" },
+    { "name": "connect", "description": "Connect to a MongoDB instance" },
+    { "name": "count", "description": "Gets the number of documents in a MongoDB collection" },
+    { "name": "create-collection", "description": "Creates a new collection in a database" },
+    { "name": "create-index", "description": "Create an index for a collection" },
+    { "name": "db-stats", "description": "Returns statistics that reflect the use state of a single database" },
+    { "name": "delete-many", "description": "Removes all documents that match the filter from a MongoDB collection" },
+    { "name": "drop-collection", "description": "Removes a collection or view from the database" },
+    { "name": "drop-database", "description": "Removes the specified database, deleting the associated data files" },
+    { "name": "drop-index", "description": "Drop an index for the provided database and collection" },
+    { "name": "explain", "description": "Returns statistics describing the execution of the winning plan" },
+    { "name": "export", "description": "Export a query or aggregation results in the specified EJSON format" },
+    { "name": "find", "description": "Run a find query against a MongoDB collection" },
+    { "name": "insert-many", "description": "Insert an array of documents into a MongoDB collection" },
+    { "name": "list-collections", "description": "List all collections for a given database" },
+    { "name": "list-databases", "description": "List all databases for a MongoDB connection" },
+    { "name": "mongodb-logs", "description": "Returns the most recent logged mongod events" },
+    { "name": "rename-collection", "description": "Renames a collection in a MongoDB database" },
+    { "name": "update-many", "description": "Updates all documents that match the specified filter for a collection" }
+  ],
+  "user_config": {
+    "connection_string": {
+      "type": "string",
+      "title": "MongoDB Connection String",
+      "description": "Use a connection string (e.g. mongodb+srv://...) OR provide API Client ID/Secret below. Leave blank if using API credentials.",
+      "default": "",
+      "sensitive": true
+    },
+    "api_client_id": {
+      "type": "string",
+      "title": "MongoDB API Client ID",
+      "description": "Atlas API client ID. Leave blank if using a connection string instead.",
+      "default": ""
+    },
+    "api_client_secret": {
+      "type": "string",
+      "title": "MongoDB API Client Secret",
+      "description": "Atlas API client secret. Leave blank if using a connection string instead.",
+      "default": "",
+      "sensitive": true
+    }
+  },
+  "_meta": {
+    "store.tool.mcpb": {
+      "scripts": {
+        "build": "npm run build:bundle"
+      },
+      "static_responses": {
+        "tools/list": {
+          "tools": [
+            {
+              "name": "aggregate",
+              "description": "Run an aggregation against a MongoDB collection",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "pipeline": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": true
+                    },
+                    "description": "An array of aggregation stages to execute."
+                  },
+                  "responseBytesLimit": {
+                    "type": "number",
+                    "default": 1048576,
+                    "description": "The maximum number of bytes to return in the response. This value is capped by the server's configured maxBytesPerQuery and cannot be exceeded. Note to LLM: If the entire aggregation result is required, use the \"export\" tool instead of increasing this limit."
+                  }
+                },
+                "required": ["database", "collection", "pipeline"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "collection-indexes",
+              "description": "Describe the indexes for a collection",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "collection-schema",
+              "description": "Describe the schema for a collection",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "sampleSize": {
+                    "type": "number",
+                    "default": 50,
+                    "description": "Number of documents to sample for schema inference"
+                  },
+                  "responseBytesLimit": {
+                    "type": "number",
+                    "default": 1048576,
+                    "description": "The maximum number of bytes to return in the response. This value is capped by the server's configured maxBytesPerQuery and cannot be exceeded."
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "collection-storage-size",
+              "description": "Gets the size of the collection",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "connect",
+              "description": "Connect to a MongoDB instance. The config resource captures if the server is already connected to a MongoDB cluster. If the user has configured a connection string or has previously called the connect tool, a connection is already established and there's no need to call this tool unless the user has explicitly requested to switch to a new MongoDB cluster.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "connectionString": {
+                    "type": "string",
+                    "description": "MongoDB connection string (in the mongodb:// or mongodb+srv:// format)"
+                  }
+                },
+                "required": ["connectionString"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "count",
+              "description": "Gets the number of documents in a MongoDB collection using db.collection.count() and query as an optional filter parameter",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "query": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "A filter/query parameter. Allows users to filter the documents to count. Matches the syntax of the filter argument of db.collection.count()."
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "create-collection",
+              "description": "Creates a new collection in a database. If the database doesn't exist, it will be created automatically.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "create-index",
+              "description": "Create an index for a collection",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The name of the index"
+                  },
+                  "definition": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "classic"
+                            },
+                            "keys": {
+                              "type": "object",
+                              "properties": {},
+                              "additionalProperties": {},
+                              "description": "The index definition"
+                            }
+                          },
+                          "required": ["type", "keys"],
+                          "additionalProperties": false,
+                          "description": "Definition for a MongoDB index (e.g. ascending/descending/geospatial/text)."
+                        }
+                      ]
+                    },
+                    "description": "The index definition. Use 'classic' for standard indexes."
+                  }
+                },
+                "required": ["database", "collection", "definition"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "db-stats",
+              "description": "Returns statistics that reflect the use state of a single database",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  }
+                },
+                "required": ["database"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "delete-many",
+              "description": "Removes all documents that match the filter from a MongoDB collection",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "filter": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "The query filter, specifying the deletion criteria. Matches the syntax of the filter argument of db.collection.deleteMany()"
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "drop-collection",
+              "description": "Removes a collection or view from the database. The method also removes any indexes associated with the dropped collection.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "drop-database",
+              "description": "Removes the specified database, deleting the associated data files",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  }
+                },
+                "required": ["database"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "drop-index",
+              "description": "Drop an index for the provided database and collection.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "indexName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The name of the index to be dropped."
+                  },
+                  "type": {
+                    "type": "string",
+                    "const": "classic",
+                    "default": "classic",
+                    "description": "The type of index to be deleted. Is always set to 'classic'."
+                  }
+                },
+                "required": ["database", "collection", "indexName"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "explain",
+              "description": "Returns statistics describing the execution of the winning plan chosen by the query optimizer for the evaluated method",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "method": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": { "type": "string", "const": "aggregate" },
+                            "arguments": {
+                              "type": "object",
+                              "properties": {
+                                "pipeline": {
+                                  "type": "array",
+                                  "items": { "type": "object", "properties": {}, "additionalProperties": true },
+                                  "description": "An array of aggregation stages to execute."
+                                }
+                              },
+                              "required": ["pipeline"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["name", "arguments"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": { "type": "string", "const": "find" },
+                            "arguments": {
+                              "type": "object",
+                              "properties": {
+                                "filter": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": true,
+                                  "description": "The query filter, matching the syntax of the query argument of db.collection.find()"
+                                },
+                                "projection": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": true,
+                                  "description": "The projection, matching the syntax of the projection argument of db.collection.find()"
+                                },
+                                "limit": {
+                                  "type": "number",
+                                  "default": 10,
+                                  "description": "The maximum number of documents to return"
+                                },
+                                "sort": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": {},
+                                  "description": "A document, describing the sort order, matching the syntax of the sort argument of cursor.sort(). The keys of the object are the fields to sort on, while the values are the sort directions (1 for ascending, -1 for descending)."
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["name", "arguments"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": { "type": "string", "const": "count" },
+                            "arguments": {
+                              "type": "object",
+                              "properties": {
+                                "query": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": true,
+                                  "description": "A filter/query parameter. Allows users to filter the documents to count. Matches the syntax of the filter argument of db.collection.count()."
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["name", "arguments"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "description": "The method and its arguments to run"
+                  },
+                  "verbosity": {
+                    "type": "string",
+                    "enum": ["queryPlanner", "queryPlannerExtended", "executionStats", "allPlansExecution"],
+                    "default": "queryPlanner",
+                    "description": "The verbosity of the explain plan, defaults to queryPlanner. If the user wants to know how fast is a query in execution time, use executionStats. It supports all verbosities as defined in the MongoDB Driver."
+                  }
+                },
+                "required": ["database", "collection", "method"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "export",
+              "description": "Export a query or aggregation results in the specified EJSON format.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "exportTitle": {
+                    "type": "string",
+                    "description": "A short description to uniquely identify the export."
+                  },
+                  "exportTarget": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": { "type": "string", "const": "find", "description": "The literal name 'find' to represent a find cursor as target." },
+                            "arguments": {
+                              "type": "object",
+                              "properties": {
+                                "filter": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": true,
+                                  "description": "The query filter, matching the syntax of the query argument of db.collection.find()"
+                                },
+                                "projection": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": true,
+                                  "description": "The projection, matching the syntax of the projection argument of db.collection.find()"
+                                },
+                                "limit": { "type": "number" },
+                                "sort": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": {},
+                                  "description": "A document, describing the sort order, matching the syntax of the sort argument of cursor.sort(). The keys of the object are the fields to sort on, while the values are the sort directions (1 for ascending, -1 for descending)."
+                                }
+                              },
+                              "additionalProperties": false,
+                              "description": "The arguments for 'find' operation."
+                            }
+                          },
+                          "required": ["name", "arguments"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": { "type": "string", "const": "aggregate", "description": "The literal name 'aggregate' to represent an aggregation cursor as target." },
+                            "arguments": {
+                              "type": "object",
+                              "properties": {
+                                "pipeline": {
+                                  "type": "array",
+                                  "items": { "type": "object", "properties": {}, "additionalProperties": true },
+                                  "description": "An array of aggregation stages to execute."
+                                }
+                              },
+                              "required": ["pipeline"],
+                              "additionalProperties": false,
+                              "description": "The arguments for 'aggregate' operation."
+                            }
+                          },
+                          "required": ["name", "arguments"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "description": "The export target along with its arguments."
+                  },
+                  "jsonExportFormat": {
+                    "type": "string",
+                    "enum": ["relaxed", "canonical"],
+                    "default": "relaxed",
+                    "description": "The format to be used when exporting collection data as EJSON with default being relaxed.\nrelaxed: A string format that emphasizes readability and interoperability at the expense of type preservation. That is, conversion from relaxed format to BSON can lose type information.\ncanonical: A string format that emphasizes type preservation at the expense of readability and interoperability. That is, conversion from canonical to BSON will generally preserve type information except in certain specific cases."
+                  }
+                },
+                "required": ["database", "collection", "exportTitle", "exportTarget"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "find",
+              "description": "Run a find query against a MongoDB collection",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "filter": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "The query filter, matching the syntax of the query argument of db.collection.find()"
+                  },
+                  "projection": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "The projection, matching the syntax of the projection argument of db.collection.find()"
+                  },
+                  "limit": {
+                    "type": "number",
+                    "default": 10,
+                    "description": "The maximum number of documents to return"
+                  },
+                  "sort": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {},
+                    "description": "A document, describing the sort order, matching the syntax of the sort argument of cursor.sort(). The keys of the object are the fields to sort on, while the values are the sort directions (1 for ascending, -1 for descending)."
+                  },
+                  "responseBytesLimit": {
+                    "type": "number",
+                    "default": 1048576,
+                    "description": "The maximum number of bytes to return in the response. This value is capped by the server's configured maxBytesPerQuery and cannot be exceeded. Note to LLM: If the entire query result is required, use the \"export\" tool instead of increasing this limit."
+                  }
+                },
+                "required": ["database", "collection"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "insert-many",
+              "description": "Insert an array of documents into a MongoDB collection. If the list of documents is above com.mongodb/maxRequestPayloadBytes, consider inserting them in batches.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "documents": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": true,
+                      "description": "An individual MongoDB document"
+                    },
+                    "description": "The array of documents to insert, matching the syntax of the document argument of db.collection.insertMany()."
+                  }
+                },
+                "required": ["database", "collection", "documents"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "list-collections",
+              "description": "List all collections for a given database",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  }
+                },
+                "required": ["database"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "list-databases",
+              "description": "List all databases for a MongoDB connection",
+              "input_schema": {
+                "type": "object",
+                "properties": {}
+              },
+              "output_schema": {
+                "type": "object",
+                "properties": {
+                  "databases": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "size": { "type": "number" }
+                      },
+                      "required": ["name", "size"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "totalCount": { "type": "number" }
+                },
+                "required": ["databases", "totalCount"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "mongodb-logs",
+              "description": "Returns the most recent logged mongod events",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["global", "startupWarnings"],
+                    "default": "global",
+                    "description": "The type of logs to return. Global returns all recent log entries, while startupWarnings returns only warnings and errors from when the process started."
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "maximum": 1024,
+                    "minimum": 1,
+                    "default": 50,
+                    "description": "The maximum number of log entries to return."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "rename-collection",
+              "description": "Renames a collection in a MongoDB database",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "newName": {
+                    "type": "string",
+                    "description": "The new name for the collection"
+                  },
+                  "dropTarget": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, drops the target collection if it exists"
+                  }
+                },
+                "required": ["database", "collection", "newName"],
+                "additionalProperties": false
+              }
+            },
+            {
+              "name": "update-many",
+              "description": "Updates all documents that match the specified filter for a collection. If the list of documents is above com.mongodb/maxRequestPayloadBytes, consider updating them in batches.",
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "description": "Database name"
+                  },
+                  "collection": {
+                    "type": "string",
+                    "description": "Collection name"
+                  },
+                  "filter": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "The selection criteria for the update, matching the syntax of the filter argument of db.collection.updateOne()"
+                  },
+                  "update": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true,
+                    "description": "An update document describing the modifications to apply using update operator expressions"
+                  },
+                  "upsert": {
+                    "type": "boolean",
+                    "description": "Controls whether to insert a new document if no documents match the filter"
+                  }
+                },
+                "required": ["database", "collection", "filter", "update"],
+                "additionalProperties": false
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

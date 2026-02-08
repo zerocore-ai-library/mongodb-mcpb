@@ -1,0 +1,1 @@
+{"version":3,"file":"useRenderData.d.ts","sourceRoot":"","sources":["../../../../src/ui/hooks/useRenderData.ts"],"names":[],"mappings":"AAUA,6CAA6C;AAC7C,UAAU,mBAAmB,CAAC,CAAC;IAC3B,IAAI,EAAE,CAAC,GAAG,IAAI,CAAC;IACf,SAAS,EAAE,OAAO,CAAC;IACnB,KAAK,EAAE,MAAM,GAAG,IAAI,CAAC;CACxB;AAED;;;;;;;;;;;;;;;;;;;;GAoBG;AACH,wBAAgB,aAAa,CAAC,CAAC,GAAG,OAAO,KAAK,mBAAmB,CAAC,CAAC,CAAC,CAoDnE"}
