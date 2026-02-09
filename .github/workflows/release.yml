@@ -4,178 +4,84 @@ on:
   push:
     tags:
       - "v*"
-
-permissions:
-  contents: read
-
-env:
-  NODE_VERSION: "20.x"
-  TOOL_CLI_VERSION: "latest"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (validate without publishing)"
+        required: false
+        default: "false"
+        type: boolean
 
 jobs:
-  dist:
-    name: Build Dist
+  build:
+    name: Build & Pack
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: recursive
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          node-version: "20.x"
 
-      - name: Enable Corepack (pnpm)
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.23.0 --activate
-
-      - name: Init upstream submodule
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive upstream
-
-      - name: Build upstream dist
-        env:
-          MCPB_SKIP_RUNTIME_DEPS: "1"
-        run: node scripts/build-bundle.mjs
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          name: dist
-          if-no-files-found: error
-          path: server/**/dist/**
+          version: 9
 
-  build:
-    name: Build (${{ matrix.target }})
-    needs: dist
-    runs-on: ${{ matrix.runs_on }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: darwin-x86_64
-            runs_on: macos-15-intel
-          - target: darwin-arm64
-            runs_on: macos-15
-          - target: linux-x86_64
-            runs_on: ubuntu-24.04
-          - target: linux-arm64
-            runs_on: ubuntu-24.04-arm
-          - target: win32-x86_64
-            runs_on: windows-2022
-          - target: win32-arm64
-            runs_on: windows-11-arm
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: false
+      - name: Build bundle
+        run: npm run build:bundle
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+      - name: Setup tool-cli
+        uses: zerocore-ai/tool-action/setup@v1
 
-      - name: Download dist
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: server
-
-      - name: Install runtime deps
-        run: npm ci --omit=dev --omit=optional --no-audit --no-fund
-
-      - name: Install tool-cli (prebuilt)
-        id: install_tool
-        continue-on-error: true
-        shell: bash
-        run: |
-          curl -fsSL "https://raw.githubusercontent.com/zerocore-ai/tool-cli/main/install.sh" | sh -s -- \
-            --version="${TOOL_CLI_VERSION}" \
-            --prefix="$HOME/.local" \
-            --force \
-            --no-modify-path
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          tool --version
-
-      - name: Setup Rust (tool-cli fallback)
-        if: steps.install_tool.outcome != 'success'
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install tool-cli from source (fallback)
-        if: steps.install_tool.outcome != 'success'
-        shell: bash
-        run: |
-          cargo install --git "https://github.com/zerocore-ai/tool-cli" --locked --force
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-          tool --version
+      - name: Validate manifest
+        uses: zerocore-ai/tool-action/validate@v1
 
       - name: Pack bundle
-        shell: bash
-        run: |
-          rm -f ./*.mcpb ./*.mcpbx
-          tool pack
-          BUNDLE="$(
-            shopt -s nullglob
-            bundles=(./*.mcpb ./*.mcpbx)
-            if [ "${#bundles[@]}" -ne 1 ]; then
-              echo "Expected 1 bundle, found ${#bundles[@]}" >&2
-              exit 1
-            fi
-            printf '%s\n' "${bundles[0]}"
-          )"
-          FILENAME="$(basename "$BUNDLE")"
-          EXT="${FILENAME##*.}"
-          BASE="${FILENAME%.*}"
-          mkdir -p dist
-          OUT="dist/${BASE}-${{ matrix.target }}.${EXT}"
-          mv "$FILENAME" "$OUT"
-          node -e "
-            const fs = require('fs');
-            const crypto = require('crypto');
-            const path = require('path');
-            const p = process.argv[1];
-            const d = fs.readFileSync(p);
-            const h = crypto.createHash('sha256').update(d).digest('hex');
-            fs.writeFileSync(p + '.sha256', h + '  ' + path.basename(p) + '\n');
-          " "$OUT"
-          echo "Created: $OUT"
+        id: pack
+        uses: zerocore-ai/tool-action/pack@v1
+        with:
+          output-dir: dist
+          checksum: "true"
 
-      - name: Upload bundle
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: bundle-${{ matrix.target }}
+          name: bundle
           path: |
             dist/*.mcpb
-            dist/*.mcpbx
             dist/*.sha256
 
-  release:
-    name: Create Release
+  publish:
+    name: Publish
     needs: build
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write
+    if: github.event_name == 'push' || github.event.inputs.dry_run != 'true'
     steps:
-      - name: Download all bundles
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          pattern: bundle-*
-          merge-multiple: true
+          name: bundle
+          path: dist
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ github.ref_name }}
-          generate_release_notes: true
-          files: |
-            artifacts/*.mcpb
-            artifacts/*.mcpbx
-            artifacts/*.sha256
+      - name: Setup tool-cli
+        uses: zerocore-ai/tool-action/setup@v1
+
+      # mongodb-mcpb is cross-platform (no native deps) so we publish as universal
+      - name: Publish to registry
+        run: |
+          BUNDLE=$(ls dist/*.mcpb | head -1)
+          FLAGS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            FLAGS="--dry-run"
+          fi
+          tool publish --universal "$BUNDLE" $FLAGS
+        env:
+          TOOL_REGISTRY_TOKEN: ${{ secrets.TOOL_REGISTRY_TOKEN }}
