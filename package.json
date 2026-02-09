@@ -1,7 +1,7 @@
 {
   "name": "mongodb-mcpb-bundle",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Build-time dependencies for the MongoDB MCPB bundle.",
   "license": "UNLICENSED",
   "scripts": {
