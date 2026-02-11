@@ -2,6 +2,37 @@
 
 An MCP server for interacting with MongoDB databases and MongoDB Atlas, providing tools for querying, schema inspection, and data management.
 
+## Setup
+
+### Using tool CLI
+
+Install the CLI from https://github.com/zerocore-ai/tool-cli
+
+```bash
+# Install from tool.store
+tool install library/mongodb
+```
+
+```bash
+# View available tools
+tool info library/mongodb
+```
+
+```bash
+# List databases
+tool call library/mongodb -m list-databases
+```
+
+```bash
+# Run a find query
+tool call library/mongodb -m find -p database=test -p collection=users
+```
+
+### Prerequisites
+
+- Node.js 20.19.0+, 22.12.0+, or 23+
+- MongoDB connection string
+
 ## Configuration
 
 | Field | Required | Description |
@@ -253,37 +284,6 @@ Get recent mongod log events.
 |-------|------|----------|-------------|
 | `type` | string | No | Log type: "global" or "startupWarnings" (default: "global") |
 | `limit` | integer | No | Max log entries (default: 50, max: 1024) |
-
-## Setup
-
-### Using tool CLI
-
-Install the CLI from https://github.com/zerocore-ai/tool-cli
-
-```bash
-# Install from tool.store
-tool install library/mongodb
-```
-
-```bash
-# View available tools
-tool info library/mongodb
-```
-
-```bash
-# List databases
-tool call library/mongodb -m list-databases
-```
-
-```bash
-# Run a find query
-tool call library/mongodb -m find -p database=test -p collection=users
-```
-
-### Prerequisites
-
-- Node.js 20.19.0+, 22.12.0+, or 23+
-- MongoDB connection string
 
 ## License
 
