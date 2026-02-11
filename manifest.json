@@ -68,6 +68,8 @@
   },
   "_meta": {
     "store.tool.mcpb": {
+      "runtime": "javascript/node",
+      "categories": ["database"],
       "scripts": {
         "build": "npm run build:bundle"
       },
