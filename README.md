@@ -4,15 +4,9 @@ An MCP server for interacting with MongoDB databases and MongoDB Atlas, providin
 
 ## Configuration
 
-Configure **one** of the following authentication methods:
-
 | Field | Required | Description |
 |-------|----------|-------------|
-| `connection_string` | No* | MongoDB connection string (e.g., `mongodb+srv://...`) |
-| `api_client_id` | No* | Atlas API service account client ID |
-| `api_client_secret` | No* | Atlas API service account secret |
-
-*One of connection_string OR api_client_id+api_client_secret is required.
+| `connection_string` | Yes | MongoDB connection string (e.g., `mongodb+srv://...`) |
 
 ## Tools
 
@@ -289,7 +283,7 @@ tool call library/mongodb -m find -p database=test -p collection=users
 ### Prerequisites
 
 - Node.js 20.19.0+, 22.12.0+, or 23+
-- MongoDB connection string or Atlas API credentials
+- MongoDB connection string
 
 ## License
 

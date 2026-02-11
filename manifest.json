@@ -29,9 +29,7 @@
         "stderr,mcp"
       ],
       "env": {
-        "MDB_MCP_CONNECTION_STRING": "${user_config.connection_string}",
-        "MDB_MCP_API_CLIENT_ID": "${user_config.api_client_id}",
-        "MDB_MCP_API_CLIENT_SECRET": "${user_config.api_client_secret}"
+        "MDB_MCP_CONNECTION_STRING": "${user_config.connection_string}"
       }
     }
   },
@@ -63,21 +61,8 @@
     "connection_string": {
       "type": "string",
       "title": "MongoDB Connection String",
-      "description": "Use a connection string (e.g. mongodb+srv://...) OR provide API Client ID/Secret below. Leave blank if using API credentials.",
-      "default": "",
-      "sensitive": true
-    },
-    "api_client_id": {
-      "type": "string",
-      "title": "MongoDB API Client ID",
-      "description": "Atlas API client ID. Leave blank if using a connection string instead.",
-      "default": ""
-    },
-    "api_client_secret": {
-      "type": "string",
-      "title": "MongoDB API Client Secret",
-      "description": "Atlas API client secret. Leave blank if using a connection string instead.",
-      "default": "",
+      "description": "MongoDB connection string (e.g. mongodb+srv://...).",
+      "required": true,
       "sensitive": true
     }
   },
